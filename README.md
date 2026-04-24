@@ -67,26 +67,31 @@ human-override CLI with few-shot feedback loop, eval harness with metrics output
 ## How to Run It
 
 ```bash
-# 1. Clone and set up
-cp .env.example .env
-# Add your ANTHROPIC_API_KEY to .env
+# 1. Authenticate with AWS (Bedrock — no Anthropic API key needed)
+aws login --profile bootcamp --region us-east-1
+export AWS_PROFILE=bootcamp          # macOS/Linux
+# set AWS_PROFILE=bootcamp           # Windows CMD
 
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 2. Run the coordinator on all sample tickets
+# 3. Run the coordinator on all sample tickets
 python agents/coordinator.py --ticket data/sample_tickets.json
 
-# 3. Run on a single ticket
+# 4. Run on a single ticket
 python agents/coordinator.py --ticket data/sample_tickets.json --id TKT-001
 
-# 4. Run the eval harness
+# 5. Run the eval harness
 python evals/harness.py
 
-# 5. Adversarial cases only
+# 6. Adversarial cases only
 python evals/harness.py --adversarial
+
+# 7. Open the triage dashboard
+open dashboard.html    # or double-click in Explorer
 ```
 
-No Docker required. Python 3.11+ and an Anthropic API key are the only dependencies.
+No Docker required. Python 3.11+ and an AWS profile with Bedrock access are the only dependencies.
 
 ## If We Had More Time
 
