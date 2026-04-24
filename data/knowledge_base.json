@@ -1,0 +1,94 @@
+[
+  {
+    "id": "KB-001",
+    "title": "Reset Active Directory Password",
+    "keywords": ["password", "reset", "forgot", "expired", "locked", "can't login", "cannot login"],
+    "summary": "Guide for resetting a user's AD password when they are locked out or have forgotten it.",
+    "steps": [
+      "Verify user identity via manager confirmation or security questions",
+      "Navigate to AD Users and Computers > find user > right-click > Reset Password",
+      "Set temporary password and check 'User must change password at next logon'",
+      "Communicate temporary password via phone (never email)"
+    ],
+    "auto_resolvable": true
+  },
+  {
+    "id": "KB-002",
+    "title": "Unlock Active Directory Account",
+    "keywords": ["locked", "account locked", "unlock", "too many attempts", "failed login"],
+    "summary": "Unlock an AD account locked after repeated failed login attempts.",
+    "steps": [
+      "Open AD Users and Computers",
+      "Find user account > Properties > Account tab",
+      "Uncheck 'Account is locked out'",
+      "Click Apply and OK"
+    ],
+    "auto_resolvable": true
+  },
+  {
+    "id": "KB-003",
+    "title": "Reset MFA / Two-Factor Authentication",
+    "keywords": ["mfa", "two factor", "authenticator", "2fa", "token", "otp", "lost phone"],
+    "summary": "Re-enroll a user in MFA when they have lost access to their authenticator app.",
+    "steps": [
+      "Verify user identity with manager and employee ID",
+      "Navigate to Azure AD > user account > Authentication methods",
+      "Delete existing MFA registration",
+      "Send re-enrollment link to user's secondary email on file"
+    ],
+    "auto_resolvable": true
+  },
+  {
+    "id": "KB-004",
+    "title": "VPN Connection Troubleshooting",
+    "keywords": ["vpn", "remote access", "tunnel", "cisco anyconnect", "not connecting", "dropped"],
+    "summary": "Steps to resolve common VPN connectivity issues.",
+    "steps": [
+      "Check internet connectivity without VPN first",
+      "Disconnect and reconnect the VPN client",
+      "Clear VPN client cache: Help > Clear Cache",
+      "If still failing, uninstall and reinstall Cisco AnyConnect",
+      "Verify correct VPN endpoint URL in client settings"
+    ],
+    "auto_resolvable": true
+  },
+  {
+    "id": "KB-005",
+    "title": "Standard Software Installation — Pre-Approved List",
+    "keywords": ["install", "software", "application", "program", "download", "setup"],
+    "summary": "Install pre-approved software from the company catalog.",
+    "steps": [
+      "Open Software Center (Start > Software Center)",
+      "Browse or search for the application",
+      "Click Install — no admin rights required for approved apps",
+      "If software is not in catalog, submit a software request ticket to the software queue"
+    ],
+    "auto_resolvable": true
+  },
+  {
+    "id": "KB-006",
+    "title": "WiFi Not Working — Office",
+    "keywords": ["wifi", "wireless", "no internet", "network", "connectivity", "can't connect"],
+    "summary": "Troubleshoot office WiFi connectivity issues.",
+    "steps": [
+      "Forget the corporate WiFi network and reconnect",
+      "Check that corporate certificate is installed (IT > Certificates)",
+      "Try connecting to guest WiFi to isolate whether it's device or network",
+      "If multiple users affected, escalate to networking infrastructure team"
+    ],
+    "auto_resolvable": false
+  },
+  {
+    "id": "KB-007",
+    "title": "Laptop Won't Turn On",
+    "keywords": ["laptop", "won't turn on", "dead", "black screen", "no power", "hardware"],
+    "summary": "Basic hardware checks before dispatching replacement.",
+    "steps": [
+      "Verify charger is connected and charging indicator light is on",
+      "Hold power button for 10 seconds (hard reset)",
+      "Remove external devices and try again",
+      "If still unresponsive, dispatch loaner laptop and schedule hardware inspection"
+    ],
+    "auto_resolvable": false
+  }
+]

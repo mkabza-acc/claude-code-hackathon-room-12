@@ -1,0 +1,50 @@
+{
+  "john.doe@company.com": {
+    "email": "john.doe@company.com",
+    "name": "John Doe",
+    "title": "Software Engineer",
+    "department": "Engineering",
+    "account_status": "active",
+    "manager": "jane.smith@company.com"
+  },
+  "jane.smith@company.com": {
+    "email": "jane.smith@company.com",
+    "name": "Jane Smith",
+    "title": "Engineering Manager",
+    "department": "Engineering",
+    "account_status": "active",
+    "manager": "cto@company.com"
+  },
+  "cto@company.com": {
+    "email": "cto@company.com",
+    "name": "Alex Kim",
+    "title": "CTO",
+    "department": "Technology",
+    "account_status": "active",
+    "manager": "ceo@company.com"
+  },
+  "ceo@company.com": {
+    "email": "ceo@company.com",
+    "name": "Morgan Chen",
+    "title": "CEO",
+    "department": "Executive",
+    "account_status": "active",
+    "manager": null
+  },
+  "cfo@company.com": {
+    "email": "cfo@company.com",
+    "name": "Pat Rivera",
+    "title": "CFO",
+    "department": "Finance",
+    "account_status": "active",
+    "manager": "ceo@company.com"
+  },
+  "locked.user@company.com": {
+    "email": "locked.user@company.com",
+    "name": "Sam Locked",
+    "title": "Analyst",
+    "department": "Operations",
+    "account_status": "locked",
+    "manager": "jane.smith@company.com"
+  }
+}
