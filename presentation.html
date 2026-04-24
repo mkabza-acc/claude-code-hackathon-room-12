@@ -344,7 +344,7 @@
         <div class="col">
           <div class="card">
             <h3>What runs</h3>
-            <p>Full coordinator pipeline · triage specialist · resolver specialist · 5 tools · eval harness with 5 metrics</p>
+            <p>Full coordinator pipeline · triage specialist · resolver specialist · 5 core tools · PreToolUse hook · human-override feedback loop · eval harness with 6 metrics</p>
           </div>
         </div>
         <div class="col">
@@ -630,22 +630,60 @@ Returns structured error on failure:
   </div>
 
   <!-- ─────────────────────────────────────────────
-       SLIDE 11 — CHALLENGES STATUS
+       SLIDE 11 — HOOK + FEEDBACK LOOP
   ───────────────────────────────────────────── -->
-  <div class="slide" id="slide-11">
+  <div class="slide" id="slide-11-hook">
+    <div class="slide-title">The Brake &amp; The Loop — Challenges 5 &amp; 8</div>
+    <h2>Hard stop + human feedback</h2>
+    <div class="cols" style="margin-top: 24px;">
+      <div class="col">
+        <div class="card">
+          <h3>PreToolUse hook — hard stop</h3>
+          <p>Deterministic gate in <code>hooks/pre_tool_use.py</code>, called before every write tool. Blocks three patterns with no LLM involved:</p>
+          <ul style="margin-top:10px; padding-left:18px; font-size:0.9rem; color:var(--muted); line-height:1.8;">
+            <li><code class="danger">BLOCKED_SECURITY_QUEUE</code> — resolve on security ticket</li>
+            <li><code class="warn">BLOCKED_FROZEN_ACCOUNT</code> — any write on frozen account</li>
+            <li><code class="accent2">BLOCKED_PII_EXFIL_PATTERN</code> — ticket body matches injection regex</li>
+          </ul>
+          <p style="margin-top:10px;">A hook denial is treated as a forced escalation by the coordinator — the agent cannot proceed.</p>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <h3>Human-override loop</h3>
+          <p>When a human disagrees with the agent's routing decision:</p>
+          <pre style="margin-top:10px; font-size:0.78rem;"><span class="fn">python</span> tools/override_cli.py \
+  --ticket TKT-001 \
+  --queue hardware \
+  --priority P4 \
+  --escalate false \
+  --reason <span class="str">"printer question, not urgent"</span></pre>
+        </div>
+        <div class="card" style="margin-top:12px;">
+          <h3>Correction → few-shot → next run</h3>
+          <p>Override saved to <code>data/overrides.json</code>. On the next ticket, <code>get_few_shot_examples</code> injects the 3 most recent corrections into the triage prompt. Eval harness tracks <strong>override regression</strong> — did the agent repeat a corrected mistake?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SLIDE 12 — CHALLENGES STATUS
+  ───────────────────────────────────────────── -->
+  <div class="slide" id="slide-12-status">
     <div class="slide-title">What We Shipped</div>
-    <h2>7 of 8 challenges — 6 done, 1 partial</h2>
+    <h2>All 8 challenges — done</h2>
     <table style="margin-top: 24px;">
       <thead><tr><th>#</th><th>Challenge</th><th>Status</th><th>Artifact</th></tr></thead>
       <tbody>
         <tr><td>1</td><td>The Mandate</td><td><span class="pill pill-done">done</span></td><td><code>decisions/001-mandate.md</code></td></tr>
         <tr><td>2</td><td>The Bones</td><td><span class="pill pill-done">done</span></td><td><code>decisions/002-coordinator-specialist-split.md</code></td></tr>
-        <tr><td>3</td><td>The Tools</td><td><span class="pill pill-done">done</span></td><td><code>tools/</code> — 5 tools, boundary docstrings, structured errors</td></tr>
+        <tr><td>3</td><td>The Tools</td><td><span class="pill pill-done">done</span></td><td><code>tools/</code> — 5 core tools, boundary docstrings, structured errors</td></tr>
         <tr><td>4</td><td>The Triage</td><td><span class="pill pill-done">done</span></td><td><code>agents/coordinator.py</code> + validation-retry + structlog</td></tr>
-        <tr><td>5</td><td>The Brake</td><td><span class="pill pill-part">partial</span></td><td>6 deterministic trigger rules; PreToolUse hook not yet wired</td></tr>
+        <tr><td>5</td><td>The Brake</td><td><span class="pill pill-done">done</span></td><td>6 escalation triggers + <code>hooks/pre_tool_use.py</code> hard-wired into coordinator</td></tr>
         <tr><td>6</td><td>The Attack</td><td><span class="pill pill-done">done</span></td><td>5 adversarial cases in <code>data/sample_tickets.json</code></td></tr>
-        <tr><td>7</td><td>The Scorecard</td><td><span class="pill pill-done">done</span></td><td><code>evals/harness.py</code> — 5 metrics, stratified by label</td></tr>
-        <tr><td>8</td><td>The Loop</td><td><span class="pill pill-skip">skipped</span></td><td>Human-override → few-shot feedback loop (stretch goal)</td></tr>
+        <tr><td>7</td><td>The Scorecard</td><td><span class="pill pill-done">done</span></td><td><code>evals/harness.py</code> — 6 metrics incl. override regression</td></tr>
+        <tr><td>8</td><td>The Loop</td><td><span class="pill pill-done">done</span></td><td><code>tools/override_cli.py</code> → <code>data/overrides.json</code> → few-shot injection on next run</td></tr>
       </tbody>
     </table>
   </div>
@@ -684,27 +722,19 @@ Returns structured error on failure:
   ───────────────────────────────────────────── -->
   <div class="slide" id="slide-13">
     <div class="slide-title">If We Had More Time</div>
-    <h2>Five things, in priority order</h2>
+    <h2>Three things, in priority order</h2>
     <div style="margin-top:24px; width:100%;">
       <div class="card" style="display:flex; gap:16px; align-items:flex-start; margin-bottom:12px;">
         <div style="font-size:1.6rem; color:var(--accent); font-weight:700; flex-shrink:0;">1</div>
-        <div><strong>Wire the PreToolUse hook</strong> — block <code>resolve_ticket</code> on security queue at the SDK level. The "hard stop" vs. "slow stop" distinction. Currently only the slow stop (escalation check) is wired.</div>
+        <div><strong>Real ServiceNow / AD integration</strong> — swap JSON mock data for live CMDB and directory lookups. The tool interfaces are already designed for this; it's a config change, not a rewrite.</div>
       </div>
       <div class="card" style="display:flex; gap:16px; align-items:flex-start; margin-bottom:12px;">
         <div style="font-size:1.6rem; color:var(--accent); font-weight:700; flex-shrink:0;">2</div>
-        <div><strong>The Loop (Challenge 8)</strong> — capture human overrides as labeled examples, feed back into the eval set and as few-shot examples for the triage classifier.</div>
-      </div>
-      <div class="card" style="display:flex; gap:16px; align-items:flex-start; margin-bottom:12px;">
-        <div style="font-size:1.6rem; color:var(--accent); font-weight:700; flex-shrink:0;">3</div>
-        <div><strong>Real ServiceNow / AD integration</strong> — swap JSON mock data for live CMDB and directory lookups. The tool interfaces are designed for this; it's a config change, not a rewrite.</div>
-      </div>
-      <div class="card" style="display:flex; gap:16px; align-items:flex-start; margin-bottom:12px;">
-        <div style="font-size:1.6rem; color:var(--accent); font-weight:700; flex-shrink:0;">4</div>
-        <div><strong>Confidence calibration</strong> — the current score is self-reported by the LLM. Post-hoc calibration against eval labels would make the 0.70 threshold meaningful.</div>
+        <div><strong>Confidence calibration</strong> — the current score is self-reported by the LLM. Post-hoc calibration against eval labels would make the 0.70 escalation threshold meaningful rather than a guess.</div>
       </div>
       <div class="card" style="display:flex; gap:16px; align-items:flex-start;">
-        <div style="font-size:1.6rem; color:var(--accent); font-weight:700; flex-shrink:0;">5</div>
-        <div><strong>Expand the eval set</strong> — 100+ tickets, even distribution across all six queues and four priorities. Stratified sampling to prevent easy P4s from dominating the accuracy score.</div>
+        <div style="font-size:1.6rem; color:var(--accent); font-weight:700; flex-shrink:0;">3</div>
+        <div><strong>Expand the eval set + semantic few-shot</strong> — 100+ tickets with stratified sampling; replace recency-based few-shot injection with vector similarity so the most <em>relevant</em> past correction surfaces, not just the most recent.</div>
       </div>
     </div>
   </div>
@@ -742,7 +772,7 @@ python evals/harness.py</pre>
 
 <!-- ── Controls ── -->
 <div class="progress-bar" id="progress"></div>
-<div class="slide-counter" id="counter">1 / 14</div>
+<div class="slide-counter" id="counter">1 / 15</div>
 <div class="nav">
   <button onclick="prev()">← Prev</button>
   <button onclick="next()">Next →</button>
