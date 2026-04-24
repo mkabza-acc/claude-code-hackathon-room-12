@@ -30,14 +30,65 @@ from agents.coordinator import process_ticket
 log = structlog.get_logger()
 
 _DEFAULT_TICKETS = Path(__file__).parent.parent / "data" / "sample_tickets.json"
+_OVERRIDES_PATH = Path(__file__).parent.parent / "data" / "overrides.json"
 _CONFIDENCE_THRESHOLD = 0.80  # "confident" for false-confidence calculation
 
 
-def _load_tickets(path: Path, adversarial_only: bool) -> list[dict]:
+def _load_override_tickets() -> list[dict]:
+    """Load human-override records and convert them into eval-compatible ticket dicts."""
+    if not _OVERRIDES_PATH.exists():
+        return []
+    with open(_OVERRIDES_PATH) as f:
+        overrides = json.load(f)
+
+    # Deduplicate: for each ticket_id keep only the most recent override
+    seen: dict = {}
+    for o in overrides:
+        seen[o["ticket_id"]] = o
+
+    # Load original ticket bodies from the ticket store so we can re-run them
+    store_path = Path(__file__).parent.parent / "data" / "ticket_store.json"
+    store = {}
+    if store_path.exists():
+        with open(store_path) as f:
+            store = json.load(f)
+
+    result = []
+    for o in seen.values():
+        tid = o["ticket_id"]
+        if tid not in store:
+            continue
+        # Merge stored ticket context with the human-corrected labels
+        entry = {
+            "ticket_id": tid,
+            "subject": store[tid].get("subject", ""),
+            "body": store[tid].get("body", ""),
+            "requestor_email": store[tid].get("requestor_email", "unknown@company.com"),
+            "requestor_name": store[tid].get("requestor_name", "Unknown"),
+            "requestor_title": store[tid].get("requestor_title", ""),
+            "channel": store[tid].get("channel", "email"),
+            "expected_queue": o["expected_queue"],
+            "expected_priority": o["expected_priority"],
+            "expected_escalate": o["expected_escalate"],
+            "label": "override",
+        }
+        result.append(entry)
+    return result
+
+
+def _load_tickets(path: Path, adversarial_only: bool, include_overrides: bool = True) -> list[dict]:
     with open(path) as f:
         tickets = json.load(f)
     if adversarial_only:
         tickets = [t for t in tickets if t.get("label") == "adversarial"]
+    elif include_overrides:
+        override_tickets = _load_override_tickets()
+        if override_tickets:
+            existing_ids = {t["ticket_id"] for t in tickets}
+            # Overrides replace the original labeled entry so ground truth stays authoritative
+            tickets = [t for t in tickets if t["ticket_id"] not in {o["ticket_id"] for o in override_tickets}]
+            tickets.extend(override_tickets)
+            log.info("overrides_loaded", count=len(override_tickets))
     return tickets
 
 
@@ -100,6 +151,8 @@ def _print_summary(results: list[dict]) -> None:
 
     adversarial = [r for r in results if r["label"] == "adversarial"]
     adversarial_pass = sum(1 for r in adversarial if r["queue_correct"] and r["priority_correct"])
+    overrides = [r for r in results if r["label"] == "override"]
+    override_pass = sum(1 for r in overrides if r["queue_correct"] and r["priority_correct"])
 
     print("\n" + "=" * 60)
     print("EVAL SUMMARY")
@@ -113,6 +166,8 @@ def _print_summary(results: list[dict]) -> None:
         print(f"  Escalation accuracy: {escalation_correct}/{len(escalation_evals)} = {escalation_correct/len(escalation_evals):.1%}")
     if adversarial:
         print(f"  Adversarial pass:    {adversarial_pass}/{len(adversarial)} = {adversarial_pass/len(adversarial):.1%}")
+    if overrides:
+        print(f"  Override regression: {override_pass}/{len(overrides)} = {override_pass/len(overrides):.1%}  (human-corrected cases)")
 
     print("\nPrecision per queue:")
     queue_tp: dict = defaultdict(int)
