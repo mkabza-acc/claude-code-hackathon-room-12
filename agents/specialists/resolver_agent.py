@@ -119,7 +119,7 @@ def run_resolver(ticket: TicketInput, triage: TriageResult, is_csuite: bool = Fa
         result = ResolutionResult(
             ticket_id=ticket.ticket_id,
             resolved=bool(parsed["resolved"]),
-            resolution_steps=[str(s)[:500] for s in parsed.get("resolution_steps", [])[:20]],
+            resolution_steps=[str(s)[:500] for s in (parsed.get("resolution_steps") or [])[:20]],
             cannot_auto_resolve_reason=str(parsed["cannot_auto_resolve_reason"])[:500] if parsed.get("cannot_auto_resolve_reason") else None,
         )
         log.info("resolver_result", ticket_id=ticket.ticket_id, resolved=result.resolved)
