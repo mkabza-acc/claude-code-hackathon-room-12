@@ -19,8 +19,8 @@ from tools.get_few_shot_examples import get_few_shot_examples
 
 log = structlog.get_logger()
 
-_CLIENT = anthropic.Anthropic()
-_MODEL = "claude-haiku-4-5-20251001"
+_CLIENT = anthropic.AnthropicBedrock(aws_region="us-west-2")
+_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
 _SYSTEM_PROMPT = """You are an IT helpdesk triage specialist. Your only job is to classify
 a support ticket into the correct queue and priority level.
