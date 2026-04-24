@@ -1,0 +1,56 @@
+{
+  "TKT-001": {
+    "ticket_id": "TKT-001",
+    "queue": "accounts",
+    "priority": "P3",
+    "summary": "This is a password reset request affecting a single user with a time-sensitive deadline. While the user has an urgent meeting, this is a standard account access issue with a straightforward workaround (password reset), not a full system outage or security incident.",
+    "confidence": 0.95,
+    "status": "resolved",
+    "created_at": "2026-04-24T12:54:00.842646+00:00",
+    "resolution_summary": "1. Verify user identity using corporate directory and confirm employment status; 2. Access Active Directory or identity management system (e.g., Okta, Azure AD)",
+    "steps_taken": [
+      "1. Verify user identity using corporate directory and confirm employment status",
+      "2. Access Active Directory or identity management system (e.g., Okta, Azure AD)",
+      "3. Locate user account for John Doe (Software Engineer)",
+      "4. Initiate password reset workflow",
+      "5. Generate temporary password meeting complexity requirements",
+      "6. Communicate temporary password to user via secure channel (phone or verified email)",
+      "7. Instruct user to log in with temporary password",
+      "8. User will be prompted to create new password on first login",
+      "9. Verify successful login and account access restored",
+      "10. Document ticket with completion time and confirmation from user"
+    ],
+    "resolved_at": "2026-04-24T12:54:04.230698+00:00"
+  },
+  "TKT-002": {
+    "ticket_id": "TKT-002",
+    "queue": "accounts",
+    "priority": "P3",
+    "summary": "This is a standard account lockout issue affecting a single user with a clear resolution path available. While the user indicates urgency, account lockouts are routine and typically have quick workarounds (password reset, admin unlock).",
+    "confidence": 0.95,
+    "status": "resolved",
+    "created_at": "2026-04-24T12:54:06.642522+00:00",
+    "resolution_summary": "1. Verify the user's identity through callback verification or employee database lookup; 2. Access the Active Directory or user management system",
+    "steps_taken": [
+      "1. Verify the user's identity through callback verification or employee database lookup",
+      "2. Access the Active Directory or user management system",
+      "3. Locate Sam Locked's account and confirm locked status",
+      "4. Click 'Unlock Account' in the account properties",
+      "5. Reset the user's password to a temporary secure password",
+      "6. Communicate the temporary password to the user via secure channel",
+      "7. Instruct user to log in with temporary password and change it immediately upon first login",
+      "8. Confirm user has regained access to their account",
+      "9. Document the unlock action and password reset in the ticket"
+    ],
+    "resolved_at": "2026-04-24T12:54:09.520756+00:00"
+  },
+  "TKT-003": {
+    "ticket_id": "TKT-003",
+    "queue": "networking",
+    "priority": "P2",
+    "summary": "VPN connectivity is a critical business system for remote work. While only one user is currently impacted, this is a recurring technical issue (not a one-time outage) that's blocking productive work and needs investigation beyond basic troubleshooting.",
+    "confidence": 0.92,
+    "status": "open",
+    "created_at": "2026-04-24T12:54:14.117949+00:00"
+  }
+}
