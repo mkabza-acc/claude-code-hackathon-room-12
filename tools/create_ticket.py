@@ -45,9 +45,15 @@ def _load_store() -> dict:
 
 
 def _save_store(store: dict) -> None:
+    import os
     _STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(_STORE_PATH, "w") as f:
         json.dump(store, f, indent=2)
+    # Restrict to owner read/write only — ticket data contains PII and priority info.
+    try:
+        os.chmod(_STORE_PATH, 0o600)
+    except OSError:
+        pass  # Windows does not support POSIX permissions; best-effort only
 
 
 def create_ticket(ticket_id: str, queue: str, priority: str, summary: str, confidence: float) -> dict:

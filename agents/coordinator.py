@@ -95,7 +95,10 @@ def process_ticket(ticket: TicketInput) -> CoordinatorOutput:
     tlog.info("escalation_decision", should_escalate=escalation.should_escalate, triggers=escalation.escalation_triggers)
 
     ticket_body = ticket.subject + " " + ticket.body
-    account_status = user_ctx.get("account_status", "active") if not user_ctx.get("isError") else "active"
+    # When directory lookup fails we do NOT assume the account is active — treat as unknown
+    # and rely on escalation rules to route appropriately.
+    account_status = user_ctx.get("account_status", "unknown") if not user_ctx.get("isError") else "unknown"
+    is_csuite = user_ctx.get("is_csuite", False) if not user_ctx.get("isError") else False
 
     create_hook = check_pre_tool_use(
         tool_name="create_ticket",
@@ -125,7 +128,7 @@ def process_ticket(ticket: TicketInput) -> CoordinatorOutput:
     resolution = None
 
     if not escalation.should_escalate:
-        resolution = run_resolver(ticket, triage)
+        resolution = run_resolver(ticket, triage, is_csuite=is_csuite)
         if resolution.resolved:
             hook = check_pre_tool_use(
                 tool_name="resolve_ticket",
@@ -176,11 +179,20 @@ def process_ticket(ticket: TicketInput) -> CoordinatorOutput:
 
 def main():
     parser = argparse.ArgumentParser(description="InstantDesk coordinator agent")
-    parser.add_argument("--ticket", required=True, help="Path to ticket JSON file")
+    parser.add_argument("--ticket", required=True, help="Path to ticket JSON file (must be inside the project data/ directory)")
     parser.add_argument("--id", help="Process only this ticket ID (optional)")
     args = parser.parse_args()
 
-    with open(args.ticket) as f:
+    ticket_path = Path(args.ticket).resolve()
+    allowed_base = (Path(__file__).parent.parent / "data").resolve()
+    if not str(ticket_path).startswith(str(allowed_base)):
+        print(f"Error: --ticket path must be inside the data/ directory ({allowed_base})")
+        sys.exit(1)
+    if not ticket_path.exists():
+        print(f"Error: ticket file not found: {ticket_path}")
+        sys.exit(1)
+
+    with open(ticket_path) as f:
         raw = json.load(f)
 
     tickets = raw if isinstance(raw, list) else [raw]

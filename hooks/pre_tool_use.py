@@ -18,13 +18,23 @@ Returns:
 
 import re
 
+# Patterns detect credential exfiltration and prompt-injection signals in raw ticket text.
+# These are defence-in-depth only — tickets are processed as opaque data, so these
+# patterns catch obvious attempts that slipped past input validation.
+# Patterns use broad synonyms and allow for spacing/obfuscation variations.
 _PII_EXFIL_PATTERNS = [
-    re.compile(r"\bsend\b.{0,40}\bpassword", re.IGNORECASE),
-    re.compile(r"\blist\b.{0,40}\bpassword", re.IGNORECASE),
-    re.compile(r"\bdump\b.{0,40}\bcredential", re.IGNORECASE),
-    re.compile(r"\bexport\b.{0,40}\b(user|account|credential)", re.IGNORECASE),
-    re.compile(r"\bignore\b.{0,30}\b(instructions|previous|prior)", re.IGNORECASE),
-    re.compile(r"\bsystem\s+override\b", re.IGNORECASE),
+    # Credential retrieval / listing
+    re.compile(r"\b(send|share|give|show|reveal|display|print|output|return|provide|fetch|get)\b.{0,60}\b(password|passwd|passphrase|secret|credential|token|api.?key)\b", re.IGNORECASE),
+    re.compile(r"\b(list|dump|export|extract|enumerate|harvest)\b.{0,60}\b(password|passwd|credential|credentials|account|accounts|user|users|secret|secrets|token|tokens)\b", re.IGNORECASE),
+    # Prompt injection / instruction override signals
+    re.compile(r"\bignore\b.{0,50}\b(instruction|instructions|previous|prior|above|all)\b", re.IGNORECASE),
+    re.compile(r"\b(system|admin|root)\s*(override|prompt|instruction)\b", re.IGNORECASE),
+    re.compile(r"\bforget\b.{0,30}\b(instruction|instructions|rule|rules|constraint|constraints|above)\b", re.IGNORECASE),
+    re.compile(r"\bnew\s+instruction\b", re.IGNORECASE),
+    re.compile(r"\bdo not\s+(follow|obey|respect)\b", re.IGNORECASE),
+    re.compile(r"\bact\s+as\b.{0,30}\b(admin|root|superuser|system)\b", re.IGNORECASE),
+    # Exfiltration via resolution steps
+    re.compile(r"\b(email|send|forward|transmit)\b.{0,60}\b(result|output|response|data|record|log)\b.{0,40}\b(external|outside|attacker|me|my)\b", re.IGNORECASE),
 ]
 
 _WRITE_TOOLS = {"resolve_ticket", "escalate_to_human", "create_ticket"}

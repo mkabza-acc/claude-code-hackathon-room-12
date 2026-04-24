@@ -32,6 +32,7 @@ Returns structured error on failure:
 """
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -40,6 +41,7 @@ _OVERRIDE_PATH = Path(__file__).parent.parent / "data" / "overrides.json"
 
 _VALID_QUEUES = {"accounts", "networking", "hardware", "software", "security", "infrastructure"}
 _VALID_PRIORITIES = {"P1", "P2", "P3", "P4"}
+_MAX_REASON_LEN = 300
 
 
 def _load_json(path: Path, default):
@@ -50,9 +52,15 @@ def _load_json(path: Path, default):
 
 
 def _save_json(path: Path, data) -> None:
+    import os
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         json.dump(data, f, indent=2)
+    # Restrict to owner read/write only — override data feeds LLM prompts.
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass  # Windows does not support POSIX permissions; best-effort only
 
 
 def record_override(
@@ -62,6 +70,14 @@ def record_override(
     should_escalate: bool,
     override_reason: str,
 ) -> dict:
+    # Sanitize and cap reason length before it enters the override store.
+    # Stored reasons are later injected into LLM prompts as few-shot examples,
+    # so any injection payload here would affect all future triage decisions.
+    override_reason = re.sub(r'[\x00-\x1f\x7f]', ' ', str(override_reason)).strip()
+    if not override_reason:
+        return {"isError": True, "code": "INVALID_FIELD", "guidance": "override_reason is required and cannot be empty."}
+    override_reason = override_reason[:_MAX_REASON_LEN]
+
     if correct_queue not in _VALID_QUEUES:
         return {"isError": True, "code": "INVALID_FIELD", "guidance": f"Queue '{correct_queue}' is not valid. Use one of: {sorted(_VALID_QUEUES)}"}
     if correct_priority not in _VALID_PRIORITIES:
