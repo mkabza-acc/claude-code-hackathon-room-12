@@ -15,6 +15,7 @@ import structlog
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from models.ticket import TicketInput, TriageResult, Queue, Priority
+from tools.get_few_shot_examples import get_few_shot_examples
 
 log = structlog.get_logger()
 
@@ -53,6 +54,9 @@ Respond with valid JSON matching this schema exactly:
 
 
 def run_triage(ticket: TicketInput, retry_count: int = 0) -> TriageResult:
+    few_shot = get_few_shot_examples(n=3)
+    few_shot_block = f"\n\n{few_shot['examples']}" if few_shot["count"] > 0 else ""
+
     context = f"""Ticket ID: {ticket.ticket_id}
 Subject: {ticket.subject}
 From: {ticket.requestor_name} ({ticket.requestor_email})
@@ -60,7 +64,7 @@ Title: {ticket.requestor_title or "Unknown"}
 Channel: {ticket.channel}
 
 Body:
-{ticket.body}"""
+{ticket.body}{few_shot_block}"""
 
     last_error = None
     for attempt in range(3):

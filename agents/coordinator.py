@@ -26,6 +26,7 @@ from tools.get_user_context import get_user_context
 from tools.create_ticket import create_ticket
 from tools.resolve_ticket import resolve_ticket
 from tools.escalate_to_human import escalate_to_human
+from hooks.pre_tool_use import check_pre_tool_use
 
 structlog.configure(
     processors=[
@@ -93,6 +94,24 @@ def process_ticket(ticket: TicketInput) -> CoordinatorOutput:
     escalation = _check_escalation(ticket, triage, user_ctx, triage.retry_count)
     tlog.info("escalation_decision", should_escalate=escalation.should_escalate, triggers=escalation.escalation_triggers)
 
+    ticket_body = ticket.subject + " " + ticket.body
+    account_status = user_ctx.get("account_status", "active") if not user_ctx.get("isError") else "active"
+
+    create_hook = check_pre_tool_use(
+        tool_name="create_ticket",
+        ticket_body=ticket_body,
+        queue=triage.queue.value,
+        account_status=account_status,
+    )
+    if not create_hook["allowed"]:
+        tlog.warning("hook_blocked_create", code=create_hook["code"], reason=create_hook["reason"])
+        escalation = EscalationDecision(
+            ticket_id=ticket.ticket_id,
+            should_escalate=True,
+            reason=f"PreToolUse hook blocked ticket creation: {create_hook['reason']}",
+            escalation_triggers=[create_hook["code"]],
+        )
+
     create_result = create_ticket(
         ticket_id=ticket.ticket_id,
         queue=triage.queue.value,
@@ -104,15 +123,33 @@ def process_ticket(ticket: TicketInput) -> CoordinatorOutput:
         tlog.warning("create_ticket_failed", error_code=create_result["code"])
 
     resolution = None
+
     if not escalation.should_escalate:
         resolution = run_resolver(ticket, triage)
         if resolution.resolved:
-            resolve_ticket(
-                ticket_id=ticket.ticket_id,
-                resolution_summary="; ".join(resolution.resolution_steps[:2]),
-                steps_taken=resolution.resolution_steps,
+            hook = check_pre_tool_use(
+                tool_name="resolve_ticket",
+                ticket_body=ticket_body,
+                queue=triage.queue.value,
+                account_status=account_status,
             )
-            tlog.info("auto_resolved", steps=len(resolution.resolution_steps))
+            if not hook["allowed"]:
+                tlog.warning("hook_blocked_resolve", code=hook["code"], reason=hook["reason"])
+                # Treat as escalation — the hook is a hard stop
+                escalation = EscalationDecision(
+                    ticket_id=ticket.ticket_id,
+                    should_escalate=True,
+                    reason=f"PreToolUse hook blocked auto-resolve: {hook['reason']}",
+                    escalation_triggers=[hook["code"]],
+                )
+                resolution = None
+            else:
+                resolve_ticket(
+                    ticket_id=ticket.ticket_id,
+                    resolution_summary="; ".join(resolution.resolution_steps[:2]),
+                    steps_taken=resolution.resolution_steps,
+                )
+                tlog.info("auto_resolved", steps=len(resolution.resolution_steps))
         else:
             tlog.info("cannot_auto_resolve", reason=resolution.cannot_auto_resolve_reason)
 
