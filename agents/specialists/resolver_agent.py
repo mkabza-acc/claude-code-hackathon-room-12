@@ -20,8 +20,8 @@ from models.ticket import TicketInput, TriageResult, ResolutionResult, Queue
 
 log = structlog.get_logger()
 
-_CLIENT = anthropic.Anthropic()
-_MODEL = "claude-haiku-4-5-20251001"
+_CLIENT = anthropic.AnthropicBedrock(aws_region="us-west-2")
+_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
 _AUTO_RESOLVABLE_QUEUES = {Queue.ACCOUNTS, Queue.NETWORKING, Queue.SOFTWARE}
 
