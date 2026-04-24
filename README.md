@@ -63,6 +63,19 @@ human-override CLI with few-shot feedback loop, eval harness with metrics output
   See [decisions/004-hook-and-feedback-loop.md](decisions/004-hook-and-feedback-loop.md)
 - **Human-override feedback loop** — `tools/override_cli.py` records human corrections; `tools/get_few_shot_examples.py`
   injects the 3 most recent overrides into the triage prompt on the next run; `evals/harness.py` tracks `override_regression`.
+- **Prompt injection defence** — ticket subject/body/name fields are passed as serialised JSON objects (not interpolated
+  into prompt strings), preventing adversarial ticket content from escaping into instructions. Output lengths are capped
+  and control characters are stripped before any field enters a prompt or the override store.
+- **Strict input validation** — `TicketInput` validates field lengths, queue/priority enum membership, and strips
+  control characters. Queue and priority values are validated against allowlists before they reach Pydantic.
+- **Fail-safe account status** — when directory lookup fails, `account_status` defaults to `"unknown"` (not `"active"`),
+  ensuring unrecognised requestors are routed through escalation rather than auto-resolved.
+- **Resolver hard blocks** — P1 tickets and C-suite requests are blocked from auto-resolution in `resolver_agent.py`,
+  not just in the escalation check, closing a gap where the two checks could fall out of sync.
+- **File permissions** — `ticket_store.json` and `overrides.json` are written with mode `0o600` (owner read/write only)
+  on POSIX systems, since both files contain PII and override data that feeds LLM prompts.
+- **Path traversal guard** — the `--ticket` CLI argument is resolved and validated against the `data/` directory
+  before any file is opened.
 
 ## How to Run It
 

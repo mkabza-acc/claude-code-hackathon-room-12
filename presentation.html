@@ -429,6 +429,42 @@
     </div>
   </div>
 
+  <!-- ── 5b. SECURITY HARDENING ────────────────── -->
+  <div class="slide" id="s5b">
+    <div class="eyebrow">Defence in depth</div>
+    <h2 style="margin-bottom:20px;">Every layer mistrusts the layer above it.</h2>
+    <div class="card-row two">
+      <div class="col">
+        <div class="card" style="margin-bottom:14px;">
+          <h3>Prompt injection defence</h3>
+          <p>Ticket fields (subject, body, name) are passed as serialised JSON objects — never interpolated into prompt strings. Adversarial content in a ticket cannot escape into the system prompt or alter routing decisions.</p>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <h3>Fail-safe account status</h3>
+          <p>When directory lookup fails, <code style="font-size:0.78rem; background:var(--code-bg); padding:1px 4px; border-radius:3px;">account_status</code> defaults to <code style="font-size:0.78rem; background:var(--code-bg); padding:1px 4px; border-radius:3px;">"unknown"</code> — not <code style="font-size:0.78rem; background:var(--code-bg); padding:1px 4px; border-radius:3px;">"active"</code>. Unrecognised requestors are escalated, not auto-resolved.</p>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card" style="margin-bottom:14px;">
+          <h3>Strict input validation</h3>
+          <p>Pydantic field limits, allowlist checks on queue/priority values, and control-character stripping on every user-supplied string — before anything reaches an LLM prompt or the override store.</p>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <h3>Resolver hard blocks</h3>
+          <p>P1 tickets and C-suite requests are blocked from auto-resolution inside <code style="font-size:0.78rem; background:var(--code-bg); padding:1px 4px; border-radius:3px;">resolver_agent.py</code> — not just in the escalation check. Two independent lines of defence for the highest-stakes decisions.</p>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px; display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap;">
+      <span class="trigger" style="background:#f0fdf4; color:#166534; border-color:#bbf7d0;">Structured JSON payloads</span>
+      <span class="trigger" style="background:#f0fdf4; color:#166534; border-color:#bbf7d0;">Control char stripping</span>
+      <span class="trigger" style="background:#f0fdf4; color:#166534; border-color:#bbf7d0;">Field length caps</span>
+      <span class="trigger" style="background:#f0fdf4; color:#166534; border-color:#bbf7d0;">Path traversal guard</span>
+      <span class="trigger" style="background:#f0fdf4; color:#166534; border-color:#bbf7d0;">File mode 0o600</span>
+      <span class="trigger" style="background:#f0fdf4; color:#166534; border-color:#bbf7d0;">Expanded PII regex</span>
+    </div>
+  </div>
+
   <!-- ── 6. ALL 8 CHALLENGES ────────────────────── -->
   <div class="slide" id="s6">
     <div class="eyebrow">Challenges</div>
@@ -499,7 +535,7 @@ open dashboard.html</pre>
 
 <!-- ── Controls ── -->
 <div class="progress-bar" id="progress"></div>
-<div class="slide-counter" id="counter">1 / 8</div>
+<div class="slide-counter" id="counter">1 / 9</div>
 <div class="nav">
   <button onclick="prev()">← Prev</button>
   <button onclick="next()">Next →</button>
